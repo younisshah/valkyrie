@@ -1,0 +1,5 @@
+package: github.com/younisshah/valkyrie
+import:
+- package: github.com/streadway/amqp
+import:
+- package: git.apache.org/thrift.git/lib/go/thrift
