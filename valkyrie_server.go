@@ -6,6 +6,7 @@ import (
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/younisshah/valkyrie/vhandler"
+	"github.com/younisshah/valkyrie/vrabbit"
 	"github.com/younisshah/valkyrie/vservice"
 )
 
@@ -19,7 +20,7 @@ const _LISTEN_ADDRESS = "localhost:9090"
 
 func main() {
 
-	handler := vhandler.NewValkyrieHandler()
+	handler := vhandler.NewValkyrieHandler(&vrabbit.RabbitMQ{})
 	processor := vservice.NewValkyrieServiceProcessor(handler)
 	transport, err := thrift.NewTServerSocket(_LISTEN_ADDRESS)
 

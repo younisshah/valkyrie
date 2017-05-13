@@ -3,6 +3,8 @@ package vrabbit
 import (
 	"log"
 
+	"fmt"
+
 	"github.com/streadway/amqp"
 )
 
@@ -12,64 +14,94 @@ import (
 *  RabbitMQ Client
  */
 
-const _RABBIT_MQ_URL = "amqp://guest:guest@localhost:5672/"
-
-type _RabbitMQ struct {
-	url       string
-	queueName string
-	conn      *amqp.Connection
+type RabbitMQ struct {
+	conn *amqp.Connection
 }
 
-func NewRabbitMQConfig(queueName string) *_RabbitMQ {
-	c := &_RabbitMQ{url: _RABBIT_MQ_URL}
-	if len(queueName) == 0 {
-		c.queueName = "valkyrie_queue"
+func (r *RabbitMQ) Connect(url string) error {
+	if connection, err := amqp.Dial(url); err != nil {
+		return err
 	} else {
-		c.queueName = queueName
+		r.conn = connection
 	}
-	connection, err := c.getConnection()
-	failRabbitOnErr(err)
-
-	c.conn = connection
-	return c
+	return nil
 }
 
-func (r *_RabbitMQ) Produce(message string) error {
+func (r *RabbitMQ) Produce(message interface{}, queueName string) error {
 	channel, err := r.conn.Channel()
 	failRabbitOnErr(err)
 
-	q, err := r.declareQueue(r.queueName, channel)
+	q, err := r.declareQueue(queueName, channel)
 	failRabbitOnErr(err)
 
 	return r.publish(message, q, channel)
 }
 
-func (r *_RabbitMQ) Close() {
+func (r *RabbitMQ) Consume(queueName string, callback func(data interface{}) error) {
+	channel, err := r.conn.Channel()
+	failRabbitOnErr(err)
+
+	q, err := r.declareQueue(queueName, channel)
+	failRabbitOnErr(err)
+
+	failRabbitOnErr(r.channelQOS(channel))
+
+	messages, err := channel.Consume(
+		q.Name,
+		"",
+		false,
+		false,
+		false,
+		false,
+		nil,
+	)
+
+	eternity := make(chan struct{})
+
+	go func() {
+		for m := range messages {
+			body := string([]byte(m.Body))
+			fmt.Println("[+] Consumed:")
+			callback(body)
+		}
+	}()
+	fmt.Println("[+] Consuming ready")
+	<-eternity
+}
+
+func (r *RabbitMQ) Close() {
 	r.conn.Close()
 }
 
-func (r *_RabbitMQ) getConnection() (*amqp.Connection, error) {
-	return amqp.Dial(r.url)
+//***Helper methods****
+func (r *RabbitMQ) channelQOS(channel *amqp.Channel) error {
+	return channel.Qos(
+		1,
+		0,
+		false,
+	)
 }
 
-func (r *_RabbitMQ) declareQueue(queueName string, channel *amqp.Channel) (amqp.Queue, error) {
+func (r *RabbitMQ) declareQueue(queueName string, channel *amqp.Channel) (amqp.Queue, error) {
 	return channel.QueueDeclare(
 		queueName,
 		false,
 		false,
 		false,
 		false,
-		nil)
+		nil,
+	)
 }
 
-func (r *_RabbitMQ) publish(message string, queue amqp.Queue, channel *amqp.Channel) error {
+func (r *RabbitMQ) publish(message interface{}, queue amqp.Queue, channel *amqp.Channel) error {
 	return channel.Publish("",
 		queue.Name,
 		false,
 		false,
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(message),
+			DeliveryMode: amqp.Persistent,
+			ContentType:  "text/plain",
+			Body:         []byte(message.(string)),
 		})
 }
 

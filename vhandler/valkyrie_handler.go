@@ -3,7 +3,7 @@ package vhandler
 import (
 	"fmt"
 
-	"github.com/younisshah/valkyrie/vrabbit"
+	"github.com/younisshah/valkyrie/vadapter"
 )
 
 /**
@@ -12,22 +12,31 @@ import (
 *  Valkyrie service handler
  */
 
-type valkyrieHandler struct{}
+const _RABBIT_MQ_URL = "amqp://guest:guest@localhost:5672/"
 
-func NewValkyrieHandler() valkyrieHandler {
-	return valkyrieHandler{}
+type valkyrieHandler struct {
+	messageBroker vadapter.Queuer
+}
+
+func NewValkyrieHandler(messageBroker vadapter.Queuer) valkyrieHandler {
+	return valkyrieHandler{
+		messageBroker: messageBroker,
+	}
 }
 
 func (v valkyrieHandler) Send(message, queueName string) (bool, error) {
 
 	fmt.Println("[+] Rcvd >", message)
 
-	rabbit := vrabbit.NewRabbitMQConfig(queueName)
-	if err := rabbit.Produce(message); err != nil {
-		fmt.Println("[*] Failed to produce", err)
+	if err := v.messageBroker.Connect(_RABBIT_MQ_URL); err != nil {
+		fmt.Println(err)
+		return false, err
 	} else {
+		if err = v.messageBroker.Produce(message, queueName); err != nil {
+			fmt.Println("[*] Failed to produce", err)
+			return false, err
+		}
 		fmt.Println("[+] Produced to queue", queueName)
+		return true, nil
 	}
-
-	return true, nil
 }
