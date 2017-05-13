@@ -61,6 +61,17 @@ Example implementation:
 
 ---
 
+Example server implementation:
+
+```go
+messageQueue := &vrabbit.RabbitMQ{}
+valkyrieServer := vserver.NewValkyrieServer(_LISTEN_ADDRESS)
+valkyrieServer.InjectValkyrieMessageQueue(messageQueue)
+valkyrieServer.StartServer()
+```
+
+---
+
 
 TODO
 
