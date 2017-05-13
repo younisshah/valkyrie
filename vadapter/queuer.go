@@ -7,7 +7,7 @@ package vadapter
  */
 
 type Queuer interface {
-	// Adaptee must provide a *connection* field specific to the Message queue used
+	// Adaptee should provide a *connection* field specific to the Message queue used
 	Connect(url string) error
 	// Arguments are message and queue name
 	Produce(message interface{}, queueName string) error

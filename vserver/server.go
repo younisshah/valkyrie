@@ -12,6 +12,8 @@ import (
 
 /**
 *  Created by Galileo on 13/5/17.
+*
+*  Valkyrie server implementation!
  */
 
 type valkyrieServer struct {

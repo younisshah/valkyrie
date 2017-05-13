@@ -63,9 +63,10 @@ func (r *RabbitMQ) Consume(queueName string, callback func(data interface{}) err
 			body := string([]byte(m.Body))
 			fmt.Println("[+] Consumed:")
 			callback(body)
+			m.Ack(false)
 		}
 	}()
-	fmt.Println("[+] Consuming ready")
+	fmt.Println("[+] Consumer ready")
 	<-eternity
 }
 
@@ -85,7 +86,7 @@ func (r *RabbitMQ) channelQOS(channel *amqp.Channel) error {
 func (r *RabbitMQ) declareQueue(queueName string, channel *amqp.Channel) (amqp.Queue, error) {
 	return channel.QueueDeclare(
 		queueName,
-		false,
+		true,
 		false,
 		false,
 		false,

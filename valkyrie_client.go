@@ -11,7 +11,7 @@ import (
 /**
 *  Created by Galileo on 12/5/17.
 *
-*  Valkyrie Thrift client
+*  Valkyrie Thrift client - Example
  */
 
 const _URL = "localhost:9090"
