@@ -6,7 +6,6 @@ import (
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 	"github.com/younisshah/valkyrie/vadapter"
-	"github.com/younisshah/valkyrie/vhandler"
 	"github.com/younisshah/valkyrie/vservice"
 )
 
@@ -29,8 +28,7 @@ func (v *valkyrieServer) InjectValkyrieMessageQueue(queuer vadapter.Queuer) {
 	v.messageQueue = queuer
 }
 
-func (v *valkyrieServer) StartServer() {
-	handler := vhandler.NewValkyrieHandler(v.messageQueue)
+func (v *valkyrieServer) StartServer(handler vservice.ValkyrieService) {
 	processor := vservice.NewValkyrieServiceProcessor(handler)
 	transport, err := thrift.NewTServerSocket(v.listenAddress)
 
@@ -46,8 +44,7 @@ func (v *valkyrieServer) StartServer() {
 		protocolFactory,
 	)
 	fmt.Println("[+] Serving on:", v.listenAddress)
-	err = server.Serve()
-	failServerOnErr(err)
+	failServerOnErr(server.Serve())
 }
 
 func failServerOnErr(err error) {
