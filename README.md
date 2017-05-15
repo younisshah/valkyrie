@@ -64,10 +64,19 @@ Example implementation:
 Example server implementation:
 
 ```go
+type valkyrieHandler struct {
+	messageQueue vadapter.Queuer
+}
+```
+
+Here `valkyrieHandler` implements `Send` method of `ValkyrieService`
+
+```go
 messageQueue := &vrabbit.RabbitMQ{}
-valkyrieServer := vserver.NewValkyrieServer(_LISTEN_ADDRESS)
+handler := valkyrieHandler{messageQueue: messageQueue}
+valkyrieServer := vserver.NewValkyrieServer("localhost:9090")
 valkyrieServer.InjectValkyrieMessageQueue(messageQueue)
-valkyrieServer.StartServer()
+valkyrieServer.StartServer(handler)
 ```
 
 ---
